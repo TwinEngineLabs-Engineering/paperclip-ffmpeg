@@ -1,4 +1,5 @@
 require "paperclip"
+require "mini_exiftool"
 module Paperclip
   class Ffmpeg < Processor
     attr_accessor :geometry, :format, :whiny, :convert_options
@@ -58,6 +59,9 @@ module Paperclip
           # Current width and height
           current_width = current_geometry[0]
           current_height = current_geometry[1]
+
+
+
           if @keep_aspect
             if @enlarge_only
               if current_width.to_i < target_width.to_i
@@ -118,7 +122,26 @@ module Paperclip
       
       Paperclip.log("[paperclip][ffmpeg] #{parameters}")
       begin
-        success = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
+        almost = Paperclip.run("ffmpeg", parameters, :source => "#{File.expand_path(src.path)}", :dest => File.expand_path(dst.path))
+        if @meta[:rotate]
+          begin
+            metaphoto = MiniExiftool.new File.expand_path(dst.path)
+          rescue Cocaine::ExitStatusError => e
+            raise PaperclipError, "error while adding metadata for #{@basename}: #{e}" if @whiny
+          end
+
+          metaphoto.orientation = 6
+          cool = metaphoto.save
+
+          if cool
+            success = File.expand_path(dst.path)
+          else
+            Paperclip.log("Error adding rotation metadata.")
+          end
+          
+        else
+          success = File.expand_path(dst.path)
+        end
       rescue Cocaine::ExitStatusError => e
         raise PaperclipError, "error while processing video for #{@basename}: #{e}" if @whiny
       end
@@ -135,6 +158,11 @@ module Paperclip
         if line =~ /((\d*)\s.?)fps,/
           meta[:fps] = $1.to_i
         end
+
+        if line =~ /rotate\s*:\s*(\d+)/
+          meta[:rotate] = $1.to_i # do 90/180/270?
+        end
+
         # Matching lines like:
         # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
         if line =~ /Video:(.*)/
