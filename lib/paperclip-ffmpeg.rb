@@ -134,9 +134,9 @@ module Paperclip
           when 90
             6
           when 180
-            8
-          when 270
             3
+          when 270
+            8
           else
             1
           end
