@@ -130,7 +130,17 @@ module Paperclip
             raise PaperclipError, "error while adding metadata for #{@basename}: #{e}" if @whiny
           end
 
-          metaphoto.orientation = 6
+          metaphoto.orientation = case @meta[:rotate]
+          when 90
+            6
+          when 180
+            8
+          when 270
+            3
+          else
+            1
+          end
+
           cool = metaphoto.save
 
           if cool
@@ -160,7 +170,7 @@ module Paperclip
         end
 
         if line =~ /rotate\s*:\s*(\d+)/
-          meta[:rotate] = $1.to_i # do 90/180/270?
+          meta[:rotate] = $1.to_i
         end
 
         # Matching lines like:
