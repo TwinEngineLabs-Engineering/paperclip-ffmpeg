@@ -104,6 +104,7 @@ module Paperclip
           end
         end
       end
+
       # Add format
       case @format
       when 'jpg', 'jpeg', 'png', 'gif' # Images
@@ -173,6 +174,7 @@ module Paperclip
           meta[:rotate] = $1.to_i
         end
 
+
         # Matching lines like:
         # Video: h264, yuvj420p, 640x480 [PAR 72:72 DAR 4:3], 10301 kb/s, 30 fps, 30 tbr, 600 tbn, 600 tbc
         if line =~ /Video:(.*)/
@@ -184,6 +186,7 @@ module Paperclip
         # Matching Duration: 00:01:31.66, start: 0.000000, bitrate: 10404 kb/s
         if line =~ /Duration:(\s.?(\d*):(\d*):(\d*\.\d*))/
           meta[:length] = $2.to_s + ":" + $3.to_s + ":" + $4.to_s
+          @time = ($2.to_i/2).to_s + ":" + ($3.to_i/2).to_s + ":" + ($4.to_f/2).to_s
         end
       end
       meta
